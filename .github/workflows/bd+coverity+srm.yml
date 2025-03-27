@@ -1,17 +1,36 @@
-# example workflow for standalone Black Duck, Coverity and SRM using GitHub Actions
-# - Black Duck and Coverity full scans on push to specified branches with import into SRM
-# - Black Duck Rapid and Coverity Comparison scans on pull requests with PR comments enabled
-# https://github.com/marketplace/actions/black-duck-security-scan
-# https://github.com/marketplace/actions/srm-analysis
+# example workflow for standalone Black Duck, Coverity and SRM (Code DX) using GitHub Actions
+# - Black Duck and Coverity full scans on push to specified branches with upload to SRM
+# - Black Duck RAPID and Coverity Comparison scans on pull requests with PR comments enabled
+# - 2024-04-24 - added "- name: clean git > run: rm -r .git/config" to workflow to prevent issues with uploads to BD
+#
+# https://github.com/marketplace/actions/synopsys-action
+# https://github.com/marketplace/actions/code-dx-analysis
+# https://github.com/blackduck-inc/black-duck-security-scan   blackduck-inc/black-duck-security-scan@v2.0.0
+#
+#
+#  ENVIRONMENT VARIABLES AND SECRETS 
+# vars.BLACKDUCK_URL
+# secrets.BLACKDUCK_API_TOKEN
+# vars.COVERITY_URL
+# secrets.COV_USER
+# secrets.COVERITY_PASSPHRASE
+# vars.SRM_URL
+# secrets.SRM_APIKEY
+# secrets.GITHUB_TOKEN  #  Confirm GITHUB_TOKEN has workflow read & write permissions (GitHub → Project → Settings → Actions → General → Workflow Permissions)
+# 
+# change to force github action PR for 1-samshober-patch 2024-05-28 10.02 am 
+#
 name: bd+coverity+srm
 on:
   push:
-    branches: [ main, master, develop, stage, release ]
+    branches:
+    - "*"
+    # branches: [ main, 1-SamShoberWork-patch, 2-Feature-Branch, 3-Release-Branch, 4-Dev, 5-Testing, 6-Production, StreamNameAAA ]
   pull_request:
-    branches: [ main, master, develop, stage, release ]
+    branches: [ main, 1-SamShoberWork-patch ]
   workflow_dispatch:
 jobs:
-  blackduck:
+  Black_Duck_Security_Scan:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Source
@@ -22,42 +41,83 @@ jobs:
         java-version: 17
         distribution: microsoft
         cache: maven
+    # - name: clean git
+      # run: rm -r .git/config
     - name: Maven Build
       run: mvn -B -DskipTests package
-    - name: Black Duck SCA Scan
+    - name: Clean Git
+      run: rm -r .git/config
+    - name: Black Duck Full Scan
+      if: ${{ github.event_name != 'pull_request' }}
+      # uses: synopsys-sig/synopsys-action@v1.9.0
       uses: blackduck-inc/black-duck-security-scan@v2.0.0
       env:
         DETECT_PROJECT_NAME: ${{ github.event.repository.name }}
+        DETECT_PROJECT_VERSION_NAME: ${{ github.ref_name }}
+        DETECT_CODE_LOCATION_NAME: ${{ github.event.repository.name }}-${{ github.ref_name }}
       with:
+        # updated resources to use blackducksca_* from blackduck_* 
+        # blackduck_url: ${{ vars.BLACKDUCK_URL }}
+        # blackduck_token: ${{ secrets.BLACKDUCK_API_TOKEN }}
+        # blackduck_scan_full: true
+        # blackduck_scan_failure_severities: 'BLOCKER'
         blackducksca_url: ${{ vars.BLACKDUCK_URL }}
         blackducksca_token: ${{ secrets.BLACKDUCK_API_TOKEN }}
-        # blackducksca_scan_failure_severities: 'BLOCKER'
-        blackducksca_fixpr_enabled: true
+        blackducksca_scan_full: true
+        blackducksca_scan_failure_severities: 'BLOCKER'   
+    - name: Black Duck PR Scan
+      if: ${{ github.event_name == 'pull_request' }}
+      # uses: synopsys-sig/synopsys-action@v1.9.0
+      uses: blackduck-inc/black-duck-security-scan@v2.0.0
+      env:
+        DETECT_PROJECT_NAME: ${{ github.event.repository.name }}
+        DETECT_PROJECT_VERSION_NAME: ${{ github.base_ref }}
+        DETECT_CODE_LOCATION_NAME: ${{ github.event.repository.name }}-${{ github.base_ref }}
+      with:
+        # updated resources to use blackducksca_* from blackduck_* 
+        blackducksca_url: ${{ vars.BLACKDUCK_URL }}
+        blackducksca_token: ${{ secrets.BLACKDUCK_API_TOKEN }}
+        blackducksca_scan_full: false
         blackducksca_prComment_enabled: true
-        blackducksca_reports_sarif_create: true
-        blackducksca_upload_sarif_report: true
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        # include_diagnostics: true
-    - name: Coverity SAST Scan
+    - name: Coverity Full Scan
+      if: ${{ github.event_name != 'pull_request' }}
+      # uses: synopsys-sig/synopsys-action@v1.9.0
       uses: blackduck-inc/black-duck-security-scan@v2.0.0
       with:
         coverity_url: ${{ vars.COVERITY_URL }}
         coverity_user: ${{ secrets.COV_USER }}
         coverity_passphrase: ${{ secrets.COVERITY_PASSPHRASE }}
-        # coverity_policy_view: ${{ github.event_name != 'pull_request' && 'Outstanding Issues' || '' }}
+        coverity_project_name: ${{ github.event.repository.name }}
+        # coverity_stream_name: ${{ github.event.repository.name }}-${{ github.ref_name }}
+        ### from AEP yamls  streamName="$projectName($branch)" which basically where projectname is "github.event.repository.name" and branch is github.ref_name.
+        coverity_stream_name: ${{ github.event.repository.name }}(${{ github.ref_name }})
+        # coverity_policy_view: 'Outstanding Issues'
+    - name: Coverity PR Scan
+      if: ${{ github.event_name == 'pull_request' }}
+      # uses: synopsys-sig/synopsys-action@v1.9.0
+      uses: blackduck-inc/black-duck-security-scan@v2.0.0
+      with:
+        coverity_url: ${{ vars.COVERITY_URL }}
+        coverity_user: ${{ secrets.COV_USER }}
+        coverity_passphrase: ${{ secrets.COVERITY_PASSPHRASE }}
+        coverity_project_name: ${{ github.event.repository.name }}
+        coverity_stream_name: ${{ github.event.repository.name }}-${{ github.base_ref }}
         coverity_prComment_enabled: true
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        # include_diagnostics: true
-    - name: SRM Import
-      if: ${{ github.event_name != 'pull_request' }}
-      uses: codedx/codedx-github-action@v1.3.0
+    - name: SRM Upload
+      # if: ${{ github.event_name != 'pull_request' }}
+      # uses: 'codedx/codedx-github-action@v1.2.0'
+      uses: blackduck-inc/black-duck-security-scan@v2.0.0
       with:
-        server-url: ${{ vars.SRM_URL }}/codedx
+        server-url: ${{ vars.SRM_URL }}/srm
         api-key: ${{ secrets.SRM_APIKEY }}
-        auto-create-project: true
+        # ER CDX-1693 support project-name
         project-name: ${{ github.event.repository.name }}
+        # project-id: "4;branch=${{ github.ref_name }}"  
+        # ER CDX-1666 support branch-name
         base-branch-name: ${{ github.event.repository.default_branch }}
-        target-branch-name: ${{ github.ref_name }}
+        target-branch-name: ${{ github.ref_name }}     #this may not be right. commenting it out for now            
         source-and-binaries-glob: './**'
         wait-for-completion: true
 #    - name: Save Logs
@@ -66,4 +126,3 @@ jobs:
 #      with:
 #        name: bridge-logs
 #        path: ${{ github.workspace }}/.bridge
-#        include-hidden-files: true
