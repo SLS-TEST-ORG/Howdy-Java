@@ -1,3 +1,4 @@
+# this yaml is for coverity on polaris.  Polaris SaaS does not require this.   
 version: "1"
 project:
   name: ${scm.git.repo}
