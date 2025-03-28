@@ -1,5 +1,7 @@
 # example workflow for Polaris scans using the Black Duck Security Scan Action
 # https://github.com/marketplace/actions/black-duck-security-scan
+#
+# comment change to force scan at checkin
 name: polaris-ss-action
 on:
   push:
