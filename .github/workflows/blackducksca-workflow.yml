@@ -24,6 +24,8 @@ jobs:
       - name: Black Duck Security Scan
         id: black-duck-security-scan
         uses: blackduck-inc/black-duck-security-scan@v2
+        env:
+          DETECT_EXCLUDED_DETECTOR_TYPES: GIT
         with:
           blackducksca_url: ${{ vars.BLACKDUCKSCA_URL }}
           blackducksca_token: ${{ secrets.BLACKDUCKSCA_TOKEN }}
