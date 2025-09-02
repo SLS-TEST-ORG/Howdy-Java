@@ -32,7 +32,7 @@ jobs:
           blackducksca_token: ${{ secrets.BLACKDUCKSCA_TOKEN }}
           blackducksca_waitForScan: true
           # mark_build_status: success   #forces a successful scan
-          mark_build_status: failure  
+          # mark_build_status: failure  
           include_diagnostics: false
           blackducksca_prComment_enabled: true   #changed from false 2025-09-02
           blackducksca_fixpr_enabled: false   
