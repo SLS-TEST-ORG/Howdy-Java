@@ -124,21 +124,21 @@ jobs:
 #        name: bridge-logs
 #        path: ${{ github.workspace }}/.bridge
 #        include-hidden-files: true
-    - name: SRM Upload
-      # if: ${{ github.event_name != 'pull_request' }}
-      # uses: 'codedx/codedx-github-action@v1.2.0'
-      uses: blackduck-inc/black-duck-security-scan@v2.0.0
-      with:
-        server-url: ${{ vars.SRM_URL }}/srm
-        api-key: ${{ secrets.SRM_APIKEY }}
-        # ER CDX-1693 support project-name
-        project-name: ${{ github.event.repository.name }}
-        # project-id: "4;branch=${{ github.ref_name }}"  
-        # ER CDX-1666 support branch-name
-        base-branch-name: ${{ github.event.repository.default_branch }}
-        target-branch-name: ${{ github.ref_name }}     #this may not be right. commenting it out for now            
-        source-and-binaries-glob: './**'
-        wait-for-completion: true
+    # - name: SRM Upload
+    #   # if: ${{ github.event_name != 'pull_request' }}
+    #   # uses: 'codedx/codedx-github-action@v1.2.0'
+    #   uses: blackduck-inc/black-duck-security-scan@v2.0.0
+    #   with:
+    #     server-url: ${{ vars.SRM_URL }}/srm
+    #     api-key: ${{ secrets.SRM_APIKEY }}
+    #     # ER CDX-1693 support project-name
+    #     project-name: ${{ github.event.repository.name }}
+    #     # project-id: "4;branch=${{ github.ref_name }}"  
+    #     # ER CDX-1666 support branch-name
+    #     base-branch-name: ${{ github.event.repository.default_branch }}
+    #     target-branch-name: ${{ github.ref_name }}     #this may not be right. commenting it out for now            
+    #     source-and-binaries-glob: './**'
+    #     wait-for-completion: true
 #    - name: Save Logs
 #      if: always()
 #      uses: actions/upload-artifact@v4
