@@ -30,7 +30,7 @@ jobs:
           DETECT_PROJECT_NAME: "${{ github.event.organization.name }}/{{ github.event.repository.name }}"
           DETECT_PROJECT_VERSION_NAME: ${{ github.ref_name }}
           DETECT_CODE_LOCATION_NAME: ${{ github.event.repository.name }}-${{ github.ref_name }}
-          DETECT_EXCLUDED_DIRECTORIES: **/.bridge,**/.github,tmp     #implementation of detect.excluded.directories
+          DETECT_EXCLUDED_DIRECTORIES: "**/.bridge,**/.github,tmp"     #implementation of detect.excluded.directories
         with:
           blackducksca_url: ${{ vars.BLACKDUCKSCA_URL }}
           blackducksca_token: ${{ secrets.BLACKDUCKSCA_TOKEN }}
